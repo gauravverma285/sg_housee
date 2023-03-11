@@ -83,3 +83,46 @@ class SignupApiView(APIView):
 			res['message'] = str(e)
 			res['data'] = []
 			return Response(res, status=status.HTTP_400_BAD_REQUEST)
+		
+class LoginApiView(APIView):
+	""" API for login """
+
+	permission_classes = [AllowAny]
+
+	def post(self, request):
+		""" post method for login api """
+		res = {}
+		username = request.data.get("username", None)
+		password = request.data.get("password", None)
+
+		if username is None:
+			res['status'] = False
+			res['message'] = "Email is required"
+			res['data'] = []
+			return Response(res, status=status.HTTP_400_BAD_REQUEST)
+
+		if password is None:
+			res['status'] = False
+			res['message'] = "Password is required"
+			res['data'] = []
+			return Response(res, status=status.HTTP_400_BAD_REQUEST)
+
+		user = authenticate(username=username, password=password)
+		if user is None:
+			res['status'] = False
+			res['message'] = "Invalid Email or Password!"
+			res['data'] = []
+			return Response(res, status=status.HTTP_400_BAD_REQUEST)
+		serializer = UserSerializer(
+			user, read_only=True, context={'request': request})
+		if serializer:
+			res['status'] = True
+			res['message'] = "Authenticated successfully"
+			res['data'] = serializer.data
+			return Response(res, status=status.HTTP_200_OK)
+
+		else:
+			res['status'] = False
+			res['message'] = "No recored found for entered data"
+			res['data'] = []
+			return Response(res, status=status.HTTP_400_BAD_REQUEST)
