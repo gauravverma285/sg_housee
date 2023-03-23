@@ -259,3 +259,78 @@ class ForgotPasswordApiView(APIView):
 			res['message'] = str(e)
 			res['data'] = []
 			return Response(res, status=status.HTTP_400_BAD_REQUEST)
+		
+class ForgotResetPasswordApiView(APIView):
+	"""forgot reset password API view"""
+
+	permission_classes = [AllowAny]
+
+	def post(self, request):
+		""" post method for reset password API """
+
+		res = {}
+		try:
+			otp = request.data.get('otp', None)
+			user_id = request.data.get('id', None)
+			password = request.data.get('password', None)
+			re_password = request.data.get('re_password', None)
+
+			if otp is None:
+				res['status'] = False
+				res['message'] = "Otp is not provided."
+				res['data'] = []
+				return Response(res,  status=status.HTTP_404_NOT_FOUND)
+			
+			if otp:
+				if user_id is None:
+					res['status'] = False
+					res['message'] = "User's ID is required."
+					res['data'] = []
+					return Response(res,  status=status.HTTP_404_NOT_FOUND)
+
+				user = User.objects.filter(id=user_id).last()
+				if user is None:
+					res['status'] = False
+					res['message'] = "No such user register with this ID."
+					res['data'] = []
+					return Response(res,  status=status.HTTP_404_NOT_FOUND)
+
+				if str(user.otp) != str(otp):
+					res['status'] = True
+					res['message'] = 'Otp are not valid.'
+					res['data'] = {'id': user.id}
+					return Response(res, status=status.HTTP_200_OK)
+
+				if password and re_password and str(password) == str(re_password):
+					if user_id is None:
+						res['status'] = False
+						res['message'] = "User's ID is required."
+						res['data'] = []
+						return Response(res,  status=status.HTTP_404_NOT_FOUND)
+
+					user = User.objects.filter(id=user_id).last()
+					if user is None:
+						res['status'] = False
+						res['message'] = "No such user registered with this ID."
+						res['data'] = []
+						return Response(res,  status=status.HTTP_404_NOT_FOUND)
+
+					else:
+						user.set_password(password)
+						user.otp = None
+						user.save()
+						res['status'] = True
+						res['message'] = 'Password changes successfully.'
+						res['data'] = []
+						return Response(res, status=status.HTTP_200_OK)
+				else:
+					res['status'] = False
+					res['message'] = 'Password not Match!'
+					res['data'] = []
+					return Response(res, status=status.HTTP_400_BAD_REQUEST)
+
+		except Exception as e:
+			res['status'] = False
+			res['message'] = str(e)
+			res['data'] = []
+			return Response(res, status=status.HTTP_400_BAD_REQUEST)

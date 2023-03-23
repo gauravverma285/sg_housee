@@ -16,3 +16,7 @@ def otp_func() :
 		OTP += digits[math.floor(random.random() * 10)]
  
 	return OTP
+
+def random_data(input_data):
+	uid = str(random.randint(1, 9)) +  random.choice(string.ascii_letters).upper() + str(random.randint(1, 9)) + str(input_data) + random.choice(string.ascii_letters) + str(random.randint(1, 9))
+	return uid

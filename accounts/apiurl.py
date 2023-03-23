@@ -12,5 +12,7 @@ urlpatterns = [
     path('reset-password/', api.ResetPasswordApiView.as_view(), name='reset-password-api'),
     path('user-forgot-password/', api.ForgotPasswordApiView.as_view(),
          name='forgot-password-api'),
+    path('forgot-reset-password-api/', api.ForgotResetPasswordApiView.as_view(),
+         name='forgot-reset-password-api'),
     # path('changepassword/', api.UserChangePasswordView.as_view(), name='changepassword'),
 ]
