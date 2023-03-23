@@ -5,6 +5,9 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from datetime import date
 from rest_framework import status
 from .serializers import *
+from .models import User
+# from account.renderers import UserRenderer
+
 
 
 
@@ -124,5 +127,97 @@ class LoginApiView(APIView):
 		else:
 			res['status'] = False
 			res['message'] = "No recored found for entered data"
+			res['data'] = []
+			return Response(res, status=status.HTTP_400_BAD_REQUEST)
+		
+# class UserChangePasswordView(APIView):
+#   renderer_classes = [UserRenderer]
+#   permission_classes = [IsAuthenticated]
+#   def post(self, request, format=None):
+#     serializer = UserChangePasswordSerializer(data=request.data, context={'user':request.user})
+#     serializer.is_valid(raise_exception=True)
+#     return Response({'msg':'Password Changed Successfully'}, status=status.HTTP_200_OK)
+
+class ResetPasswordApiView(APIView):
+	""" API for reset password """
+
+	permission_classes = [IsAuthenticated]
+	# permission_classes = [AllowAny]
+
+	def post(self, request):
+		# users = User.objects.all(request.id)
+
+		# print(users, 'CCCCCCCCCCCCCCCCCC')
+		# user = User.objects.filter(request.user).last()
+		# print(user, 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
+		""" post method for reset password API """
+		res = {}
+		try:
+			old_password = request.data.get('old_password', None)
+			new_password = request.data.get('new_password', None)
+			re_password = request.data.get('re_password', None)
+			user = User.objects.filter(id=request.user.id).last()
+			print(user, 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
+			if user is None:
+				res['status'] = False
+				res['message'] = 'No such Authenticated User.'
+				res['data'] = []
+				return Response(res,  status=status.HTTP_404_NOT_FOUND)
+
+			if old_password is None:
+				res['status'] = False
+				res['message'] = 'Old password is required'
+				res['data'] = []
+				return Response(res,  status=status.HTTP_404_NOT_FOUND)
+
+			if not user.check_password(old_password):
+				res['status'] = False
+				res['message'] = 'Password not Match!'
+				res['data'] = []
+				return Response(res,  status=status.HTTP_404_NOT_FOUND)
+
+			if new_password is None:
+				res['status'] = False
+				res['message'] = 'New password is required'
+				res['data'] = []
+				return Response(res,  status=status.HTTP_404_NOT_FOUND)
+
+			if re_password is None:
+				res['status'] = False
+				res['message'] = 'Confirm password is required'
+				res['data'] = []
+				return Response(res,  status=status.HTTP_404_NOT_FOUND)
+
+			if str(new_password) != str(re_password):
+				res['status'] = False
+				res['message'] = 'New password and confirm password not match.'
+				res['data'] = []
+				return Response(res,  status=status.HTTP_404_NOT_FOUND)
+
+			else:
+				user.set_password(new_password)
+				user.save()
+				try:
+					user.auth_token.delete()
+				except:
+					pass
+				new_user = authenticate(
+					username=user.username, password=new_password)
+				if new_user:
+					serializer = UserSerializer(new_user, read_only=True)
+					res['status'] = True
+					res['message'] = 'Password reset successfully.'
+					res['data'] = serializer.data
+					return Response(res, status=status.HTTP_200_OK)
+
+				else:
+					res['status'] = False
+					res['message'] = 'Password reset but unable to authenticate user, please try again.'
+					res['data'] = []
+					return Response(res, status=status.HTTP_400_BAD_REQUEST)
+
+		except Exception as e:
+			res['status'] = False
+			res['message'] = str(e)
 			res['data'] = []
 			return Response(res, status=status.HTTP_400_BAD_REQUEST)

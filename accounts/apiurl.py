@@ -9,4 +9,6 @@ urlpatterns = [
     # Auth APIs
     path('signup_api/', api.SignupApiView.as_view(), name='signup-api'),
     path('login/', api.LoginApiView.as_view(), name='login'),
+    path('reset-password/', api.ResetPasswordApiView.as_view(), name='reset-password-api'),
+    # path('changepassword/', api.UserChangePasswordView.as_view(), name='changepassword'),
 ]
