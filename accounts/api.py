@@ -7,6 +7,13 @@ from rest_framework import status
 from .serializers import *
 from .models import User
 # from account.renderers import UserRenderer
+from universal.mailing import (
+	resetPassMail,
+)
+from universal.methods import (
+	otp_func,
+)
+
 
 
 
@@ -130,14 +137,6 @@ class LoginApiView(APIView):
 			res['data'] = []
 			return Response(res, status=status.HTTP_400_BAD_REQUEST)
 		
-# class UserChangePasswordView(APIView):
-#   renderer_classes = [UserRenderer]
-#   permission_classes = [IsAuthenticated]
-#   def post(self, request, format=None):
-#     serializer = UserChangePasswordSerializer(data=request.data, context={'user':request.user})
-#     serializer.is_valid(raise_exception=True)
-#     return Response({'msg':'Password Changed Successfully'}, status=status.HTTP_200_OK)
-
 class ResetPasswordApiView(APIView):
 	""" API for reset password """
 
@@ -145,11 +144,7 @@ class ResetPasswordApiView(APIView):
 	# permission_classes = [AllowAny]
 
 	def post(self, request):
-		# users = User.objects.all(request.id)
-
-		# print(users, 'CCCCCCCCCCCCCCCCCC')
-		# user = User.objects.filter(request.user).last()
-		# print(user, 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
+		
 		""" post method for reset password API """
 		res = {}
 		try:
@@ -157,7 +152,7 @@ class ResetPasswordApiView(APIView):
 			new_password = request.data.get('new_password', None)
 			re_password = request.data.get('re_password', None)
 			user = User.objects.filter(id=request.user.id).last()
-			print(user, 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
+
 			if user is None:
 				res['status'] = False
 				res['message'] = 'No such Authenticated User.'
@@ -215,6 +210,49 @@ class ResetPasswordApiView(APIView):
 					res['message'] = 'Password reset but unable to authenticate user, please try again.'
 					res['data'] = []
 					return Response(res, status=status.HTTP_400_BAD_REQUEST)
+
+		except Exception as e:
+			res['status'] = False
+			res['message'] = str(e)
+			res['data'] = []
+			return Response(res, status=status.HTTP_400_BAD_REQUEST)
+		
+class ForgotPasswordApiView(APIView):
+	"""forgot password API view"""
+
+	permission_classes = [AllowAny]
+
+	def post(self, request):
+		""" post method for forgot password API """
+
+		res = {}
+		try:
+			email = request.data.get('email', None)
+			if email is None:
+				res['status'] = False
+				res['message'] = "Email is required."
+				res['data'] = []
+				return Response(res,  status=status.HTTP_404_NOT_FOUND)
+
+			user = User.objects.filter(username=email).last()
+			if user is None:
+				res['status'] = False
+				res['message'] = "No such user registered with this email."
+				res['data'] = []
+				return Response(res,  status=status.HTTP_404_NOT_FOUND)
+
+			else:
+				user.otp = otp_func()
+				user.save()
+				name = user.name
+				subject = "Here is your OTP to Reset Password"
+				recipient_list = [user.email]
+				otp = user.otp
+				resetPassMail(subject, recipient_list, name, otp)
+				res['status'] = True
+				res['message'] = "Otp sent Successfully"
+				res['data'] = {'id': user.id}
+				return Response(res, status=status.HTTP_200_OK)
 
 		except Exception as e:
 			res['status'] = False
