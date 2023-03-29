@@ -2,10 +2,13 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework import viewsets, permissions, filters, generics, views
+from django_filters import rest_framework as django_filters
 from datetime import date
 from rest_framework import status
 from .serializers import *
 from .models import User
+from django.shortcuts import render, get_object_or_404
 # from account.renderers import UserRenderer
 from universal.mailing import (
 	resetPassMail,
@@ -334,3 +337,22 @@ class ForgotResetPasswordApiView(APIView):
 			res['message'] = str(e)
 			res['data'] = []
 			return Response(res, status=status.HTTP_400_BAD_REQUEST)
+		
+class Addclient(viewsets.ModelViewSet):
+	model = Client
+	
+	filter_backends = (
+		django_filters.DjangoFilterBackend,
+		filters.OrderingFilter,
+		filters.SearchFilter,
+	)
+	ordering_fields  = ('id', 'dob')
+	serializer_class = ClientSerializer
+	queryset         = Client.objects.all()
+	search_fields    = ('name', 'email',  'dob', 'mobile')
+	
+	def get_queryset(self):
+		id = get_object_or_404(Client, id=self.kwargs['id'])
+		print(id, 'AAAAAAAAAAAAAAAAAAAAAA')
+		return Client.objects.filter(id=id)
+

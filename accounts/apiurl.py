@@ -2,8 +2,13 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken import views as token_view
 from . import api
+from rest_framework.routers import DefaultRouter
+
 
 from accounts import api as account
+
+router = DefaultRouter()
+router.register("add-client/(?P<id>\d+)", api.Addclient),
 
 urlpatterns = [
     # Auth APIs
@@ -14,5 +19,6 @@ urlpatterns = [
          name='forgot-password-api'),
     path('forgot-reset-password-api/', api.ForgotResetPasswordApiView.as_view(),
          name='forgot-reset-password-api'),
-    # path('changepassword/', api.UserChangePasswordView.as_view(), name='changepassword'),
 ]
+
+urlpatterns=router.urls

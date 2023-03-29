@@ -23,3 +23,8 @@ class UserSerializer(serializers.ModelSerializer):
 		user = request
 		return user
 	
+class ClientSerializer(serializers.ModelSerializer):
+
+	class Meta:
+		model = Client
+		fields = ('id', 'name', 'email', 'mobile', 'dob', 'gender')
